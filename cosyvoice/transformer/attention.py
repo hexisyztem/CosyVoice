@@ -423,7 +423,7 @@ class RelPositionMultiHeadedAttention(MultiHeadedAttention):
         q, k, v = self.forward_qkv(query, key, value)
         k = k.transpose(1, 2)  # (batch, head, time2, d_k)
         v = v.transpose(1, 2)  # (batch, head, time2, d_k)
-    
+
         if self.kv_cache is not None:
             k, v = self.kv_cache.update(cache_offset, k, v, is_infer_short)
 
@@ -437,14 +437,14 @@ class RelPositionMultiHeadedAttention(MultiHeadedAttention):
         q_with_bias_v = (q + self.pos_bias_v).transpose(1, 2)
 
         # compute matrix b and matrix d
-        matrix_bd = torch.matmul(q_with_bias_v, p.transpose(-2, -1)) 
+        matrix_bd = torch.matmul(q_with_bias_v, p.transpose(-2, -1))
         # NOTE(Xiang Lyu): Keep rel_shift since espnet rel_pos_emb is used
-        matrix_bd = self.rel_shift(matrix_bd) 
+        matrix_bd = self.rel_shift(matrix_bd)
 
         assert mask.dtype == torch.bool
         mask = (mask.unsqueeze(1).eq(False) * torch.finfo(k.dtype).min).to(matrix_bd.dtype)
 
-        mask = matrix_bd / math.sqrt(self.d_k) + mask 
+        mask = matrix_bd / math.sqrt(self.d_k) + mask
         output = torch.nn.functional.scaled_dot_product_attention(
             q_with_bias_u,
             k,

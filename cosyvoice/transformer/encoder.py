@@ -48,7 +48,7 @@ class KVCache(torch.nn.Module):
 
         self.max_seq_short = max_seq_short
         self.max_seq_long = max_seq_long
-    
+
     def update(self, input_pos, k_val, v_val, is_infer_short):
         # input_pos: [S], k_val: [B, H, S, D]
         assert input_pos.shape[0] == k_val.shape[2]
@@ -142,12 +142,12 @@ class BaseEncoder(torch.nn.Module):
         self.compiled_infer_long = None
         self.max_seq_short = max_seq_short
         self.max_seq_long = max_seq_long
-        
+
     def setup_caches(self, max_seq_short, max_seq_long, dtype=torch.float32):
         assert max_seq_short == self.max_seq_short and max_seq_long == self.max_seq_long
         for it in self.encoders:
             it.self_attn.kv_cache = KVCache(1, self.attention_heads, self.max_seq_short, self.max_seq_long, self.head_dim, dtype)
-               
+
     def output_size(self) -> int:
         return self._output_size
 
@@ -355,7 +355,7 @@ class BaseEncoder(torch.nn.Module):
         chunk_size = xs.size(1)
         attention_key_size = cache_offset + chunk_size
         max_seq = self.max_seq_short if is_infer_short else self.max_seq_long
-        if fix_shape: 
+        if fix_shape:
             pos_emb = self.embed.position_encoding(offset=offset - cache_offset,
                                                 size=attention_key_size)
             target_seq_len = max_seq * 2 - 1
@@ -423,7 +423,7 @@ class BaseEncoder(torch.nn.Module):
         if self.normalize_before:
             xs = self.after_norm(xs)
         return xs
-    
+
     def step_infer_long(
         self,
         xs: torch.Tensor,

@@ -57,12 +57,13 @@ class CosyVoiceModel:
                                                 prompt_text_len=prompt_text_len.to(self.device),
                                                 prompt_speech_token=llm_prompt_speech_token.to(self.device),
                                                 prompt_speech_token_len=llm_prompt_speech_token_len.to(self.device),
-                                                embedding=llm_embedding.to(self.device),
+                                                embedding=llm_embedding.to(self.device).to(self.dtype),
                                                 beam_size=1,
                                                 sampling=25,
                                                 max_token_text_ratio=30,
                                                 min_token_text_ratio=3,
-                                                stream=True):
+                                                stream=True,
+                                                dtype=self.dtype):
                 self.tts_speech_token.append(i)
         self.llm_end = True
 

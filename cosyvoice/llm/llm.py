@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Callable
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -31,6 +31,7 @@ class TransformerLM(torch.nn.Module):
             speech_token_size: int,
             text_encoder: torch.nn.Module,
             llm: torch.nn.Module,
+            sampling: Callable,
             length_normalized_loss: bool = True,
             lsm_weight: float = 0.0,
             spk_embed_dim: int = 192,
@@ -69,6 +70,9 @@ class TransformerLM(torch.nn.Module):
         self.max_seq_long = max_seq_long
         self.attn_mask_short = torch.tril(torch.ones((self.max_seq_short, self.max_seq_short), device=device, dtype=torch.bool))
         self.attn_mask_long = torch.tril(torch.ones((self.max_seq_long, self.max_seq_long), device=device, dtype=torch.bool))
+
+        # 4. sampling method
+        self.sampling = sampling
 
     def encode(
             self,
@@ -143,6 +147,7 @@ class TransformerLM(torch.nn.Module):
             beam_size: int = 1,
             ignore_eos: bool = True,
     ):
+        return weighted_scores.softmax(dim=-1).argsort(descending=True)[9].reshape(1)
         while True:
             prob, indices = weighted_scores.softmax(dim=-1).topk(sampling)
             top_ids = prob.multinomial(beam_size, replacement=True)
@@ -151,7 +156,7 @@ class TransformerLM(torch.nn.Module):
                 break
         return top_ids
 
-    @torch.inference_mode()
+    @torch.no_grad()
     def inference(
             self,
             text: torch.Tensor,
@@ -239,3 +244,4 @@ class TransformerLM(torch.nn.Module):
         # in non-stream mode, yield all token
         if stream is False:
             yield torch.tensor([out_tokens], dtype=torch.int64, device=device)
+        print('end')
